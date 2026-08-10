@@ -1,0 +1,71 @@
+name: avenza_para_pobres
+description: Cartografía de campo offline sobre GeoPDF exportados desde ArcGIS Pro.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- Mapa ---
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # --- Geoespacial ---
+  proj4dart: ^2.1.0
+
+  # --- PDF ---
+  # Solo rasteriza la página (PDFium). La georreferencia la lee lib/geo/geopdf.
+  pdfx: ^2.6.0
+
+  # --- Compresión: FlateDecode de PDF + lectura/escritura de KMZ ---
+  archive: ^3.6.1
+
+  # --- Estampado de fecha/coordenadas y escritura de EXIF en las fotos ---
+  image: ^4.3.0
+
+  # --- GPS y sensores ---
+  geolocator: ^13.0.1
+  flutter_compass: ^0.8.0
+  permission_handler: ^11.3.1
+
+  # --- Persistencia ---
+  drift: ^2.20.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # --- Multimedia y archivos ---
+  image_picker: ^1.1.2
+  # Se queda en 8.x a propósito. La 11.x deja de aplicar el plugin de Kotlin
+  # cuando detecta AGP 9 y delega en el Kotlin integrado, que aquí está
+  # desactivado (ver android/gradle.properties), así que sus fuentes .kt no se
+  # compilarían. La 8.x aplica KGP siempre, igual que pdfx y flutter_compass.
+  # Su compileSdk 34 se corrige desde android/build.gradle.kts.
+  file_picker: ^8.3.7
+
+  # --- Estado ---
+  flutter_riverpod: ^2.5.1
+
+  # --- Compartir el KMZ exportado ---
+  share_plus: ^10.1.2
+
+  # --- Utilidades ---
+  uuid: ^4.5.0
+  xml: ^6.5.0
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  drift_dev: ^2.20.0
+  build_runner: ^2.4.12
+  test: ^1.25.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,95 @@
+workflows:
+  # -----------------------------------------------------------------------
+  # Verifica que el código compila bajo Xcode, sin firma y sin cuenta de
+  # Apple. Sirve para confirmar que el build funciona antes de meterse con
+  # certificados y Apple Developer Program. No instala en un dispositivo
+  # real: produce un .app sin firmar, no un .ipa.
+  #
+  # Sin disparador automático a propósito: se ejecuta a mano desde el
+  # panel de Codemagic. El nivel gratuito da minutos de build limitados por
+  # mes, y no conviene gastarlos en cada commit mientras se está probando.
+  # -----------------------------------------------------------------------
+  ios-verificacion:
+    name: iOS - Verificación sin firma
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events: []
+    scripts:
+      - name: Obtener dependencias
+        script: flutter pub get
+      - name: Regenerar código de drift
+        script: dart run build_runner build --delete-conflicting-outputs
+      - name: Analizar
+        script: flutter analyze
+      - name: Tests
+        script: flutter test
+      - name: Compilar iOS sin firma
+        script: flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
+
+  # -----------------------------------------------------------------------
+  # Build firmado y publicación a TestFlight.
+  #
+  # Necesita, configurado en Codemagic (Settings del proyecto → Environment
+  # variables / Code signing), un grupo de variables llamado
+  # "appstore_credentials" con:
+  #   - Una integración de App Store Connect (clave API: Issuer ID, Key ID,
+  #     archivo .p8) creada en https://appstoreconnect.apple.com/access/api
+  #   - El BUNDLE_ID de abajo dado de alta en App Store Connect
+  #
+  # Con eso, `xcode-project use-profiles` gestiona certificados y perfiles
+  # de aprovisionamiento solo — no hace falta subir manualmente .p12 ni
+  # .mobileprovision.
+  #
+  # Dispara solo con una etiqueta `ios-v*` (ej. `ios-v1.0.0`), no en cada
+  # push: publicar a TestFlight sin querer en cada commit sería un error
+  # caro de deshacer.
+  # -----------------------------------------------------------------------
+  ios-testflight:
+    name: iOS - TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - appstore_credentials
+      vars:
+        BUNDLE_ID: "com.avenzapobres.avenzaParaPobres"
+        XCODE_WORKSPACE: "Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: "com.avenzapobres.avenzaParaPobres"
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "ios-v*"
+    scripts:
+      - name: Obtener dependencias
+        script: flutter pub get
+      - name: Regenerar código de drift
+        script: dart run build_runner build --delete-conflicting-outputs
+      - name: Tests
+        script: flutter test
+      - name: Configurar firma de código
+        script: xcode-project use-profiles
+      - name: Compilar el .ipa
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
