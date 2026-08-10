@@ -1,9 +1,11 @@
 workflows:
   # -----------------------------------------------------------------------
-  # Verifica que el código compila bajo Xcode, sin firma y sin cuenta de
-  # Apple. Sirve para confirmar que el build funciona antes de meterse con
-  # certificados y Apple Developer Program. No instala en un dispositivo
-  # real: produce un .app sin firmar, no un .ipa.
+  # Compila sin firma y sin cuenta de Apple, y empaqueta el resultado como
+  # un .ipa (no solo el .app suelto). Ese .ipa se puede instalar en un
+  # iPhone real, sin pagar el Apple Developer Program, con Sideloadly
+  # (sideloadly.io) desde Windows: pide solo un Apple ID gratuito y un cable
+  # USB. La app queda instalada 7 días; Sideloadly la puede refirmar sola
+  # si el PC sigue prendido y en la misma red.
   #
   # Sin disparador automático a propósito: se ejecuta a mano desde el
   # panel de Codemagic. El nivel gratuito da minutos de build limitados por
@@ -30,8 +32,15 @@ workflows:
         script: flutter test
       - name: Compilar iOS sin firma
         script: flutter build ios --release --no-codesign
+      - name: Empaquetar como .ipa sin firmar
+        script: |
+          set -e
+          mkdir -p build/ios/sideload/Payload build/ios/ipa
+          cp -r build/ios/iphoneos/Runner.app build/ios/sideload/Payload/
+          cd build/ios/sideload
+          zip -r -q ../ipa/avenza-sin-firmar.ipa Payload
     artifacts:
-      - build/ios/iphoneos/*.app
+      - build/ios/ipa/avenza-sin-firmar.ipa
 
   # -----------------------------------------------------------------------
   # Build firmado y publicación a TestFlight.
