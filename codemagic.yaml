@@ -55,6 +55,11 @@ workflows:
     name: iOS - TestFlight
     max_build_duration: 60
     instance_type: mac_mini_m2
+    # Nombre de la integración de App Store Connect, creada en Codemagic bajo
+    # Team settings → Integrations → Developer Portal → App Store Connect. El
+    # nombre que se le ponga ahí tiene que ser exactamente este.
+    integrations:
+      app_store_connect: appstore_credentials
     environment:
       groups:
         - appstore_credentials
